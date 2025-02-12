@@ -93,7 +93,7 @@ func (s *SyncDict) RandomDistinctKeys(size int) []string {
 	return result
 }
 
-func (s *SyncDict) clear() {
+func (s *SyncDict) Clear() {
 	//s.m.Range(func(key, value interface{}) bool {
 	//	s.m.Delete(key)
 	//	return true
