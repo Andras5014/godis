@@ -1,6 +1,7 @@
 package database
 
 import (
+	"godis/aof"
 	"godis/config"
 	"godis/interface/resp"
 	"godis/lib/logger"
@@ -10,7 +11,8 @@ import (
 )
 
 type Database struct {
-	dbSet []*DB
+	dbSet      []*DB
+	aofHandler *aof.AofHandler
 }
 
 func NewDatabase() *Database {
@@ -22,9 +24,22 @@ func NewDatabase() *Database {
 		dbSet = append(dbSet, NewDB())
 		dbSet[i].index = i
 	}
-	return &Database{
+	database := &Database{
 		dbSet: dbSet,
 	}
+	if config.Properties.AppendOnly {
+		aofHandler, err := aof.NewAofHandler(database)
+		if err != nil {
+			panic(err)
+		}
+		database.aofHandler = aofHandler
+		for _, db := range database.dbSet {
+			db.addToAof = func(cmdLine CmdLine) {
+				database.aofHandler.AddToAof(db.index, cmdLine)
+			}
+		}
+	}
+	return database
 }
 func (d *Database) Exec(conn resp.Connection, args [][]byte) resp.Reply {
 	defer func() {

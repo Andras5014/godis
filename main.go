@@ -49,3 +49,37 @@ func main() {
 		logger.Error(err)
 	}
 }
+
+type ListNode struct {
+	Val  int
+	Next *ListNode
+}
+
+func isPalindrome(head *ListNode) bool {
+	slow, fast := head, head
+	for fast != nil && fast.Next != nil {
+		slow = slow.Next
+		fast = fast.Next.Next
+	}
+	slow = reverse(slow)
+	for slow != nil {
+		if slow.Val != head.Val {
+			return false
+		}
+		slow = slow.Next
+		head = head.Next
+	}
+	return true
+}
+
+func reverse(head *ListNode) *ListNode {
+	var pre *ListNode
+	cur := head
+	for cur != nil {
+		next := cur.Next
+		cur.Next = pre
+		pre = cur
+		cur = next
+	}
+	return pre
+}

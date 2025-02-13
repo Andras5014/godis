@@ -11,8 +11,9 @@ import (
 type ExecutorFunc func(db *DB, args [][]byte) resp.Reply
 type CmdLine = [][]byte
 type DB struct {
-	index int
-	data  dict.Dict
+	index    int
+	data     dict.Dict
+	addToAof func(cmdLine CmdLine)
 }
 
 func NewDB() *DB {

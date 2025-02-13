@@ -3,6 +3,7 @@ package database
 import (
 	"godis/interface/database"
 	"godis/interface/resp"
+	"godis/lib/utils"
 	"godis/resp/reply"
 )
 
@@ -39,6 +40,7 @@ func execSet(db *DB, args [][]byte) resp.Reply {
 		Data: value,
 	}
 	db.PutEntity(key, entity)
+	db.addToAof(utils.ToCmdLine2("set", args...))
 	return &reply.OkReply{}
 }
 
@@ -50,6 +52,7 @@ func execSetNX(db *DB, args [][]byte) resp.Reply {
 		Data: value,
 	}
 	result := db.PutIfAbsent(key, entity)
+	db.addToAof(utils.ToCmdLine2("setnx", args...))
 	return reply.NewIntReply(int64(result))
 }
 
@@ -60,6 +63,7 @@ func execGetSet(db *DB, args [][]byte) resp.Reply {
 
 	entity, exists := db.GetEntity(key)
 	db.PutEntity(key, &database.DataEntity{Data: value})
+	db.addToAof(utils.ToCmdLine2("getset", args...))
 	if !exists {
 		return reply.NewNullBulkReply()
 	}
