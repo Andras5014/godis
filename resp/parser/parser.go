@@ -29,6 +29,7 @@ func (r *readState) finished() bool {
 	return r.expectedArgsCount > 0 && len(r.args) == r.expectedArgsCount
 }
 
+// ParseStream 从io流中解析出消息 将结果通过chan返回
 func ParseStream(reader io.Reader) <-chan *Payload {
 	ch := make(chan *Payload)
 	go parse0(reader, ch)

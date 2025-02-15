@@ -78,7 +78,7 @@ func (h *AofHandler) handleAof() {
 }
 
 func (h *AofHandler) LoadAof() {
-	aofFile, err := os.OpenFile(h.aofFileName, os.O_RDONLY, 0600)
+	aofFile, err := os.Open(h.aofFileName)
 	if err != nil {
 		logger.Error(err)
 		return

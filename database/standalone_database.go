@@ -10,12 +10,12 @@ import (
 	"strings"
 )
 
-type Database struct {
+type StandaloneDatabase struct {
 	dbSet      []*DB
 	aofHandler *aof.AofHandler
 }
 
-func NewDatabase() *Database {
+func NewStandaloneDatabase() *StandaloneDatabase {
 	if config.Properties.Databases == 0 {
 		config.Properties.Databases = 16
 	}
@@ -24,7 +24,7 @@ func NewDatabase() *Database {
 		dbSet = append(dbSet, NewDB())
 		dbSet[i].index = i
 	}
-	database := &Database{
+	database := &StandaloneDatabase{
 		dbSet: dbSet,
 	}
 	if config.Properties.AppendOnly {
@@ -41,7 +41,7 @@ func NewDatabase() *Database {
 	}
 	return database
 }
-func (d *Database) Exec(conn resp.Connection, args [][]byte) resp.Reply {
+func (d *StandaloneDatabase) Exec(conn resp.Connection, args [][]byte) resp.Reply {
 	defer func() {
 		if err := recover(); err != nil {
 			logger.Error(err)
@@ -59,17 +59,17 @@ func (d *Database) Exec(conn resp.Connection, args [][]byte) resp.Reply {
 
 }
 
-func (d *Database) Close() {
+func (d *StandaloneDatabase) Close() {
 	//TODO implement me
 	panic("implement me")
 }
 
-func (d *Database) AfterClientClose(c resp.Connection) {
+func (d *StandaloneDatabase) AfterClientClose(c resp.Connection) {
 	//TODO implement me
 	panic("implement me")
 }
 
-func execSelect(c resp.Connection, database *Database, args [][]byte) resp.Reply {
+func execSelect(c resp.Connection, database *StandaloneDatabase, args [][]byte) resp.Reply {
 	dbIndex, err := strconv.Atoi(string(args[0]))
 	if err != nil {
 		return reply.NewErrReply("ERR invalid DB index")

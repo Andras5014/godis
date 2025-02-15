@@ -24,7 +24,7 @@ type Config struct {
 	Timeout    time.Duration `yaml:"timeout"`
 }
 
-// ListenAndServeWithSignal binds port and handle requests, blocking until receive stop signal
+// ListenAndServeWithSignal 监听中断信号并且通过closeChan通知服务器关闭
 func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 	closeChan := make(chan struct{})
 	sigCh := make(chan os.Signal)
@@ -45,19 +45,18 @@ func ListenAndServeWithSignal(cfg *Config, handler tcp.Handler) error {
 	return nil
 }
 
-// ListenAndServe binds port and handle requests, blocking until close
+// ListenAndServe 监听并提供服务，直到收到关闭信号
 func ListenAndServe(listener net.Listener, handler tcp.Handler, closeChan <-chan struct{}) {
-	// listen signal
+	// 关闭信号监听
 	go func() {
 		<-closeChan
 		logger.Info("shutting down...")
-		_ = listener.Close() // listener.Accept() will return err immediately
-		_ = handler.Close()  // close connections
+		_ = listener.Close()
+		_ = handler.Close()
 	}()
 
-	// listen port
+	// 异常处理释放资源
 	defer func() {
-		// close during unexpected error
 		_ = listener.Close()
 		_ = handler.Close()
 	}()

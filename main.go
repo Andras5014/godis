@@ -2,8 +2,10 @@ package main
 
 import (
 	"fmt"
+	"godis/cluster"
 	"godis/config"
 	"godis/database"
+	databaseface "godis/interface/database"
 	"godis/lib/logger"
 	"godis/resp/handler"
 	"godis/tcp"
@@ -37,49 +39,21 @@ func main() {
 	} else {
 		config.Properties = defaultProperties
 	}
-
+	var db databaseface.Database
+	if config.Properties.Self != "" &&
+		len(config.Properties.Peers) > 0 {
+		db = cluster.NewClusterDatabase()
+	} else {
+		db = database.NewStandaloneDatabase()
+	}
 	err := tcp.ListenAndServeWithSignal(
 		&tcp.Config{
 			Address: fmt.Sprintf("%s:%d",
 				config.Properties.Bind,
 				config.Properties.Port),
 		},
-		handler.NewRespHandler(database.NewDatabase()))
+		handler.NewRespHandler(db))
 	if err != nil {
 		logger.Error(err)
 	}
-}
-
-type ListNode struct {
-	Val  int
-	Next *ListNode
-}
-
-func isPalindrome(head *ListNode) bool {
-	slow, fast := head, head
-	for fast != nil && fast.Next != nil {
-		slow = slow.Next
-		fast = fast.Next.Next
-	}
-	slow = reverse(slow)
-	for slow != nil {
-		if slow.Val != head.Val {
-			return false
-		}
-		slow = slow.Next
-		head = head.Next
-	}
-	return true
-}
-
-func reverse(head *ListNode) *ListNode {
-	var pre *ListNode
-	cur := head
-	for cur != nil {
-		next := cur.Next
-		cur.Next = pre
-		pre = cur
-		cur = next
-	}
-	return pre
 }

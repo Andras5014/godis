@@ -1,9 +1,5 @@
 package tcp
 
-/**
- * A echo handler to test whether the handler is functioning normally
- */
-
 import (
 	"bufio"
 	"context"
@@ -16,35 +12,32 @@ import (
 	"time"
 )
 
-// EchoHandler echos received line to client, using for test
 type EchoHandler struct {
-	activeConn sync.Map
+	activeConn sync.Map //保存client的集合
 	closing    atomic.Boolean
 }
 
-// MakeEchoHandler creates EchoHandler
-func MakeHandler() *EchoHandler {
+func NewEchoHandler() *EchoHandler {
 	return &EchoHandler{}
 }
 
-// EchoClient is client for EchoHandler, using for test
 type EchoClient struct {
 	Conn    net.Conn
 	Waiting wait.Wait
 }
 
-// Close connection
+// Close 关闭客户端连接
 func (c *EchoClient) Close() error {
 	c.Waiting.WaitWithTimeout(10 * time.Second)
-	c.Conn.Close()
+	_ = c.Conn.Close()
 	return nil
 }
 
-// Handle echos received line to client
 func (h *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 	if h.closing.Get() {
-		// closing handler refuse new connection
+		// 关闭中handler 拒绝处理新连接
 		_ = conn.Close()
+		return
 	}
 
 	client := &EchoClient{
@@ -54,7 +47,6 @@ func (h *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 
 	reader := bufio.NewReader(conn)
 	for {
-		// may occurs: client EOF, client timeout, handler early close
 		msg, err := reader.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
@@ -65,6 +57,7 @@ func (h *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 			}
 			return
 		}
+		// 发送数据前设置为waiting状态，阻止连接被关闭
 		client.Waiting.Add(1)
 		b := []byte(msg)
 		_, _ = conn.Write(b)
@@ -72,7 +65,7 @@ func (h *EchoHandler) Handle(ctx context.Context, conn net.Conn) {
 	}
 }
 
-// Close stops echo handler
+// Close 关闭服务器
 func (h *EchoHandler) Close() error {
 	logger.Info("handler shutting down...")
 	h.closing.Set(true)
